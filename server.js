@@ -60,7 +60,7 @@ app.post("/chat", async (req, res) => {
       body: JSON.stringify({
         model: "tts-1",
         input: reply,
-        voice: "nova", // Voix féminine douce et bilingue
+        voice: "shimmer", // Voix féminine douce et bilingue
       })
     });
 
