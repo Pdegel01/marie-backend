@@ -17,6 +17,10 @@ app.post("/chat", async (req, res) => {
 
   if (!message) return res.status(400).json({ error: "Message vide" });
 
+  // --- NOUVEAU : NETTOYAGE DE L'HISTORIQUE ---
+  // On retire tous les messages qui n'ont pas de texte (content) pour éviter l'erreur "got null"
+  const cleanHistory = (history || []).filter(msg => msg.content && msg.content.trim() !== "");
+
   try {
     // 1. APPEL À OPENAI POUR LE TEXTE
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -30,22 +34,15 @@ app.post("/chat", async (req, res) => {
         messages: [
           { 
             role: "system", 
-            content: `Eres neoMarie, una profesora de français experta para hispanohablantes. 
-            Tu estilo es directo, amable y muy conciso.
-            REGLAS ESTRICTAS:
-            1. Tus respuestas NO deben superar las 2 o 3 frases.
-            2. Ve directamente al grano, sin introducciones largas.
-            3. Explica brevemente en español y da el ejemplo en français.
-            4. Si el usuario te habla en español, respóndele brevemente para guiarlo al français.` 
+            content: `Eres neoMarie, una profesora de français experta...` // Ton prompt habituel
           },
-          ...(history || []), 
+          ...cleanHistory, // On utilise l'historique PROPRE ici
           { role: "user", content: message }
         ],
         max_tokens: 150, 
         temperature: 0.7
       })
     });
-
     const data = await response.json();
     if (data.error) throw new Error(data.error.message);
 
