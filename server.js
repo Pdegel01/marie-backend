@@ -12,7 +12,8 @@ app.use(express.json());
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 app.post("/chat", async (req, res) => {
-  const { message } = req.body;
+  // On récupère le message actuel ET l'historique envoyé par le client
+  const { message, history } = req.body;
 
   if (!message) return res.status(400).json({ error: "Message vide" });
 
@@ -36,9 +37,11 @@ app.post("/chat", async (req, res) => {
             3. Explica brevemente en español y da el ejemplo en francés.
             4. Si el usuario te habla en español, respóndele brevemente para guiarlo al francés.` 
           },
+          // On injecte l'historique (tableau d'objets {role, content})
+          ...(history || []), 
+          // On ajoute le dernier message de l'utilisateur
           { role: "user", content: message }
         ],
-        // On réduit max_tokens pour forcer l'IA à être courte et économiser des ressources
         max_tokens: 150, 
         temperature: 0.7
       })
