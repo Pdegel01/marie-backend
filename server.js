@@ -29,7 +29,7 @@ app.post("/chat", async (req, res) => {
         messages: [
           { 
             role: "system", 
-            content: `Eres Marie, una profesora de francés experta para hispanohablantes. 
+            content: `Eres neoMarie, una profesora de francés experta para hispanohablantes. 
             Tu estilo es directo, amable y muy conciso.
             REGLAS ESTRICTAS:
             1. Tus respuestas NO deben superar las 2 o 3 frases.
