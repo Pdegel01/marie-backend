@@ -10,7 +10,7 @@ app.use(cors());
 app.use(express.json());
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY; // Ta clé récupérée sur ElevenLabs
+const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
 
 app.post("/chat", async (req, res) => {
   const { message, history } = req.body;
@@ -18,7 +18,7 @@ app.post("/chat", async (req, res) => {
   if (!message) return res.status(400).json({ error: "Message vide" });
 
   try {
-    // 1. APPEL À OPENAI POUR LE TEXTE (Ton code actuel)
+    // 1. APPEL À OPENAI POUR LE TEXTE
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -35,8 +35,8 @@ app.post("/chat", async (req, res) => {
             REGLAS ESTRICTAS:
             1. Tus respuestas NO deben superar las 2 o 3 frases.
             2. Ve directamente al grano, sin introducciones largas.
-            3. Explica brevemente en español y da el ejemplo en francés.
-            4. Si el usuario te habla en español, respóndele brevemente para guiarlo al francés.` 
+            3. Explica brevemente en español y da el ejemplo en français.
+            4. Si el usuario te habla en español, respóndele brevemente para guiarlo al français.` 
           },
           ...(history || []), 
           { role: "user", content: message }
@@ -51,8 +51,8 @@ app.post("/chat", async (req, res) => {
 
     const reply = data.choices[0].message.content;
 
-    // --- 2. NOUVEAU : APPEL À ELEVENLABS POUR LA VOIX (Rachel) ---
-    const voiceId = "21m00Tcm4TlvDq8ikWAM"; // ID de la voix Rachel
+    // --- 2. APPEL À ELEVENLABS POUR LA VOIX (Koraly) ---
+    const voiceId = "rbFGGoDXFHtVghjHuS3E"; // <--- ID DE KORALY MIS À JOUR ICI
     const ttsResponse = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
       method: "POST",
       headers: {
@@ -61,7 +61,7 @@ app.post("/chat", async (req, res) => {
       },
       body: JSON.stringify({
         text: reply,
-        model_id: "eleven_multilingual_v2", // LE MODÈLE POUR LE BILINGUE FR/ES
+        model_id: "eleven_multilingual_v2", 
         voice_settings: {
           stability: 0.5,
           similarity_boost: 0.75
@@ -75,7 +75,6 @@ app.post("/chat", async (req, res) => {
         throw new Error("Erreur ElevenLabs");
     }
 
-    // On transforme le fichier audio binaire en texte Base64
     const arrayBuffer = await ttsResponse.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     const audioBase64 = buffer.toString('base64');
