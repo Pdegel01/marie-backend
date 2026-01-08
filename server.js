@@ -24,12 +24,23 @@ app.post("/chat", async (req, res) => {
         "Authorization": `Bearer ${OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini", // Modèle optimisé 2026
+        model: "gpt-4o-mini",
         messages: [
-          { role: "system", content: "Tu es Marie, une professeure de français chaleureuse, claire et pédagogique pour des hispanophones." },
+          { 
+            role: "system", 
+            content: `Eres Marie, una profesora de francés experta para hispanohablantes. 
+            Tu estilo es directo, amable y muy conciso.
+            REGLAS ESTRICTAS:
+            1. Tus respuestas NO deben superar las 2 o 3 frases.
+            2. Ve directamente al grano, sin introducciones largas.
+            3. Explica brevemente en español y da el ejemplo en francés.
+            4. Si el usuario te habla en español, respóndele brevemente para guiarlo al francés.` 
+          },
           { role: "user", content: message }
         ],
-        max_tokens: 500
+        // On réduit max_tokens pour forcer l'IA à être courte et économiser des ressources
+        max_tokens: 150, 
+        temperature: 0.7
       })
     });
 
