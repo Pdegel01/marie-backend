@@ -1,0 +1,462 @@
+
+<!-- Ce code contient du HTML/CSS/JavaScript -->
+
+-----------------------
+
+Pour le lancer : 
+
+(cd /Users/pm_/Desktop/PE1/Github-Marie/marie-backend && npm start > /dev/null 2>&1 &) && open /Users/pm_/Desktop/PE1/Frontend.html
+
+-----------------------
+
+<!-- Importe la librairie model-viewer pour l'avatar 3D (.glb) -->
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script> 
+
+
+<!-- =======================================
+     Conteneur principal du widget Marie
+     ======================================= -->
+
+<div id="marie-widget-wrapper">
+
+    <!-- Bouton fixe en bas à droite, onclick appelle la fonction JS pour ouvrir/fermer Marie -->
+    <button id="marie-trigger-btn" onclick="toggleMarie()">
+        <!-- Crée l'effet de pulse autour du bouton -->
+        <div id="marie-pulse-efx" class="marie-pulse"></div>
+        <!-- Affiche le texte "Marie" sur le bouton -->
+        <span class="marie-main-text">Marie</span>
+    </button>
+
+    <!-- Conteneur principal du widget Marie caché par défaut avec la classe "hidden-cloud" -->
+    <div id="marie-experience-container" class="hidden-cloud">
+        
+        <!-- Bouton pour afficher/masquer l'historique des conversations -->
+        <button id="marie-history-toggle" onclick="toggleHistoryView()">
+            <!-- Icône SVG représentant une flèche (chevron) -->
+            <svg viewBox="0 0 24 24" width="14" height="14">
+                <!-- Chemin SVG qui crée la forme du chevron -->
+                <path fill="currentColor" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z" />
+            </svg>
+        </button>
+
+        <!-- Affichage du modèle 3D (HTML) - Caméra, éclairage et interactions configurés pour une vue visage -->
+        <model-viewer id="marie-avatar" 
+            src="https://cdn.jsdelivr.net/gh/Pdegel01/marie-backend@main/Hello_3.glb" 
+            style="width: 100%; height: 280px; background: transparent;" 
+            camera-orbit="0deg 80deg 1.8m" 
+            field-of-view="25deg" 
+            camera-target="0m 1.45m 0m" 
+            interpolation-decay="200" 
+            interaction-prompt="none" 
+            shadow-intensity="0.5" 
+            exposure="1" 
+            disable-zoom 
+            autoplay
+            animation-loop="false">
+        </model-viewer>
+
+        <!-- Conteneur principal de la bulle de chat (contient l'historique, le texte et les contrôles) -->
+        <div id="marie-ui-bubble">
+            <!-- Conteneur pour l'historique des messages (caché par défaut, max-height: 0) -->
+            <div id="marie-history-container"></div>
+            
+            <!-- Zone d'affichage des réponses de Marie -->
+            <div id="marie-display-text">¡Hola! Soy neoMarie. ¿En qué puedo ayudarte hoy?</div>
+
+            <!-- Groupe d'entrée utilisateur (bouton langue, textarea, boutons micro et envoi) -->
+            <div id="marie-input-group">
+                <!-- Bouton pour basculer entre ES (Espagnol) et FR (Français) -->
+                <button id="marie-lang-toggle" onclick="switchLanguage()">ES</button>
+
+                <!-- Zone de texte pour l'entrée utilisateur (s'agrandit automatiquement) -->
+                <textarea id="marie-text-input" rows="1" placeholder="Escribe aquí..." oninput="autoResizeInput()"></textarea>
+
+                <!-- Groupe de boutons pour les contrôles (micro et envoi) -->
+                <div id="marie-buttons-group">
+                    <!-- Bouton microphone pour la reconnaissance vocale -->
+                    <button id="marie-mic-btn" onclick="startVoice()">
+                        <!-- Icône SVG microphone -->
+                        <svg viewBox="0 0 24 24" width="14" height="14">
+                            <path fill="currentColor" d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
+                        </svg>
+                    </button>
+                    
+                    <!-- Bouton d'envoi du message -->
+                    <button id="marie-send-btn" onclick="sendToAI()">
+                        <!-- Icône SVG flèche d'envoi -->
+                        <svg viewBox="0 0 24 24" width="14" height="14">
+                            <path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Import de la police Montserrat depuis Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap');
+
+    /* Reset global pour tous les éléments enfants du widget */
+    #marie-widget-wrapper * { box-sizing: border-box; outline: none; }
+
+    /* BOUTON TRIGGER FORCÉ À DROITE */
+    /* Positionnement fixe du bouton Marie en bas à droite */
+    #marie-trigger-btn {
+        position: fixed !important; bottom: 20px !important; right: 20px !important;
+        left: auto !important; width: 60px; height: 60px; border-radius: 50%;
+        background: white; border: none; cursor: pointer; z-index: 99999;
+        display: flex; justify-content: center; align-items: center;
+        box-shadow: 0 8px 25px rgba(93, 63, 211, 0.3); transition: all 0.4s ease;
+    }
+    /* Texte "Marie" en violet gras */
+    .marie-main-text { color: #5D3FD3; font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 13px; z-index: 10; }
+
+    /* ANIMATION PULSE */
+    /* Cercle qui pulse autour du bouton */
+    .marie-pulse { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; background: rgba(93, 63, 211, 0.4); animation: marie-pulse-anim 2s infinite ease-out; z-index: 1; }
+    /* Classe pour désactiver le pulse */
+    .pulse-off { display: none !important; }
+    /* Keyframes de l'animation pulse (s'agrandit et disparaît) */
+    @keyframes marie-pulse-anim { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(2.3); opacity: 0; } }
+
+    /* INTERFACE */
+    /* Conteneur principal du widget (visible/caché avec les classes hidden-cloud/visible-cloud) */
+    #marie-experience-container { 
+        position: fixed !important; 
+        bottom: 90px !important; 
+        right: 20px !important; 
+        left: auto !important; 
+        width: 360px; /* Augmenté de 320px à 360px */
+        z-index: 99998; 
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        transition: all 0.5s ease; 
+        transform-origin: bottom right; 
+        font-family: 'Montserrat', sans-serif; 
+    }
+    
+    /* Bouton d'historique (caché par défaut, affiché via JS) */
+    #marie-history-toggle { position: absolute; right: 8px; bottom: 60px; width: 24px; height: 24px; border-radius: 50%; background: #5D3FD3; color: white !important; border: 1.5px solid white; cursor: pointer; display: none; justify-content: center; align-items: center; z-index: 10002; box-shadow: 0 2px 6px rgba(0,0,0,0.15); transition: all 0.3s ease; }
+    /* Rotation de la flèche quand l'historique est ouvert */
+    .history-open svg { transform: rotate(180deg); }
+
+    /* État caché du widget (invisible et non-cliquable) */
+    .hidden-cloud { opacity: 0; transform: scale(0.5) translateY(50px); pointer-events: none; }
+    /* État visible du widget (opaque et cliquable) */
+    .visible-cloud { opacity: 1; transform: scale(1) translateY(0); pointer-events: auto; }
+
+    /* Bulle de chat avec effet glass morphism (flou du fond) */
+    #marie-ui-bubble { background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border-radius: 20px; padding: 12px 15px; width: 88%; margin-top: -35px; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 4px 20px rgba(0,0,0,0.05); overflow: hidden; }
+    
+    /* MASQUER LA BARRE DE CHARGEMENT GRISE DE L'AVATAR */
+    /* Masque la barre de progress du model-viewer */
+    #marie-avatar::part(default-progress-bar) { display: none !important; }
+
+    /* Bouton pour changer de langue (ES/FR) */
+    #marie-lang-toggle { background: rgba(93, 63, 211, 0.15); color: #5D3FD3; border: 1px solid rgba(93, 63, 211, 0.2); border-radius: 6px; padding: 3px 5px; font-size: 10px; font-weight: 700; cursor: pointer; }
+
+    /* MASQUER LES SCROLLBARS DE L'HISTORIQUE */
+    /* Conteneur de l'historique (caché par défaut, max-height: 0) */
+    #marie-history-container { max-height: 0; overflow-y: auto; transition: max-height 0.4s ease; font-size: 10px; color: #1a237e; scrollbar-width: none; -ms-overflow-style: none; }
+    /* Masquer scrollbar sur Chrome/Safari */
+    #marie-history-container::-webkit-scrollbar { display: none; }
+    /* État affiché de l'historique (max-height: 120px) */
+    #marie-history-container.show { max-height: 120px; margin-bottom: 10px; border-bottom: 1px solid rgba(0,0,0,0.05); }
+
+    /* Style des entrées d'historique */
+    .hist-entry { margin-bottom: 6px; padding: 4px 8px; border-radius: 10px; }
+    /* Messages utilisateur (violet clair, aligné à droite) */
+    .hist-user { background: rgba(93, 63, 211, 0.1); text-align: right; }
+    /* Messages Marie (blanc semi-transparent, gras) */
+    .hist-marie { background: rgba(255, 255, 255, 0.4); font-weight: 600; }
+
+    /* Texte affiché pour les réponses de Marie */
+    #marie-display-text { font-size: 11px; margin-bottom: 8px; color: #1a237e; font-weight: 600; }
+
+    /* Groupe d'entrée (flexbox pour aligner les éléments) */
+    #marie-input-group { display: flex; align-items: flex-end; gap: 6px; background: rgba(255,255,255,0.3); border-radius: 15px; padding: 5px 10px; }
+
+    /* MASQUER LA SCROLLBAR GRISE DU TEXTAREA */
+    /* Zone de texte pour l'entrée utilisateur (s'agrandit automatiquement) */
+    #marie-text-input { 
+        flex: 1; background: transparent; border: none !important; padding: 5px 0; 
+        font-size: 13px; color: #1a237e; font-family: 'Montserrat', sans-serif; resize: none; 
+        min-height: 20px; scrollbar-width: none; -ms-overflow-style: none;
+    }
+    /* Masquer scrollbar du textarea sur Chrome */
+    #marie-text-input::-webkit-scrollbar { display: none; }
+
+    /* Groupe des boutons micro et envoi (flexbox) */
+    #marie-buttons-group { display: flex; gap: 4px; padding-bottom: 2px; }
+    /* Boutons micro et envoi (cercles violets) */
+    #marie-mic-btn, #marie-send-btn { background: #E0D7FF; color: #5D3FD3; border: none; width: 26px; height: 26px; border-radius: 50%; cursor: pointer; display: flex; justify-content: center; align-items: center; }
+</style>
+
+<script>
+    /* ========== RÉCUPÉRATION DES ÉLÉMENTS DOM ========== */
+    /* Conteneur principal du widget */
+    const container = document.getElementById('marie-experience-container');
+    /* Élément 3D de l'avatar */
+    const modelViewer = document.getElementById('marie-avatar');
+    /* Élément du pulse (animation) */
+    const pulseElement = document.getElementById('marie-pulse-efx');
+    /* Zone de texte d'entrée utilisateur */
+    const inputField = document.getElementById('marie-text-input');
+    /* Zone d'affichage du texte de Marie */
+    const textDisplay = document.getElementById('marie-display-text');
+    /* Conteneur de l'historique des messages */
+    const historyContainer = document.getElementById('marie-history-container');
+    /* Bouton pour afficher/masquer l'historique */
+    const historyToggle = document.getElementById('marie-history-toggle');
+    /* Bouton pour changer la langue */
+    const langToggle = document.getElementById('marie-lang-toggle');
+
+    /* ========== VARIABLES D'ÉTAT ========== */
+    /* Récupère l'historique du chat depuis le localStorage (ou crée un tableau vide) */
+    let chatHistory = JSON.parse(localStorage.getItem('marie_chat_history')) || [];
+    /* Langue actuelle pour la reconnaissance vocale (espagnol par défaut) */
+    let currentVoiceLang = 'es-ES';
+    /* ID de la boucle d'animation (pour pouvoir l'arrêter) */
+    let loopInterval = null;
+    /* Index actuel dans les animations */
+    let sequenceIndex = 0;
+    /* Tableau des fichiers GLB pour la boucle d'animation */
+    const LOOP_FILES = [
+        "Wait.glb", "Wait_2.glb", "Dance.glb",      /* 1ère séquence */
+        "Wait.glb", "Wait_2.glb", "Dance_2.glb",    /* 2ème séquence */
+        "Wait.glb", "Wait_2.glb", "Dance_3.glb"     /* 3ème séquence */
+    ];
+  
+    /* Désactive le pulse si l'utilisateur l'avait désactivé avant */
+    if (localStorage.getItem('marie_pulse_disabled') === 'true') pulseElement.classList.add('pulse-off');
+
+    /* ========== FONCTION PRINCIPALE : OUVRIR/FERMER LE WIDGET ========== */
+    function toggleMarie() {
+        /* Vérifie si le widget est caché */
+        if (container.classList.contains('hidden-cloud')) {
+            /* Sauvegarde que le pulse est désactivé */
+            localStorage.setItem('marie_pulse_disabled', 'true');
+            /* Désactive le pulse */
+            pulseElement.classList.add('pulse-off');
+            /* Affiche le widget */
+            container.classList.remove('hidden-cloud');
+            container.classList.add('visible-cloud');
+            /* Met à jour l'historique */
+            updateHistoryUI();
+
+            /* Lance l'animation d'accueil "Hello" */
+            modelViewer.src = "https://cdn.jsdelivr.net/gh/Pdegel01/marie-backend@main/Hello_3.glb";
+            
+            /* Lance la boucle d'animation après 1.3 secondes */
+            setTimeout(() => {
+                if (!container.classList.contains('hidden-cloud')) startAnimationLoop();
+            }, 1300);
+        } else {
+            /* Cache le widget */
+            container.classList.add('hidden-cloud');
+            container.classList.remove('visible-cloud');
+            /* Arrête l'animation */
+            clearInterval(loopInterval);
+        }
+    }
+
+    /* ========== GESTION DES ANIMATIONS 3D ========== */
+    function startAnimationLoop() {
+        /* Arrête toute boucle précédente */
+        clearInterval(loopInterval);
+        /* Réinitialise l'index */
+        sequenceIndex = 0;
+        /* Lance la première animation */
+        playNext();
+        /* Lance une boucle qui change l'animation toutes les 8 secondes */
+        loopInterval = setInterval(playNext, 8000);
+    }
+
+    function playNext() {
+        /* Change le fichier GLB de l'avatar */
+        modelViewer.src = "https://cdn.jsdelivr.net/gh/Pdegel01/marie-backend@main/" + LOOP_FILES[sequenceIndex];
+        /* Avance à l'animation suivante (boucle avec %) */
+        sequenceIndex = (sequenceIndex + 1) % LOOP_FILES.length;
+    }
+
+    /* ========== GESTION DE LA LANGUE ========== */
+    function switchLanguage() {
+        if (currentVoiceLang === 'es-ES') {
+            /* Passe à FR */
+            currentVoiceLang = 'fr-FR'; 
+            langToggle.textContent = 'FR';
+            langToggle.style.background = '#5D3FD3'; 
+            langToggle.style.color = 'white';
+            inputField.placeholder = "Écris ici...";
+        } else {
+            /* Passe à ES */
+            currentVoiceLang = 'es-ES'; 
+            langToggle.textContent = 'ES';
+            langToggle.style.background = 'rgba(93, 63, 211, 0.15)'; 
+            langToggle.style.color = '#5D3FD3';
+            inputField.placeholder = "Escribe aquí...";
+        }
+    }
+
+    /* ========== GESTION DE LA TEXTAREA ========== */
+    function autoResizeInput() {
+        /* Réinitialise la hauteur */
+        inputField.style.height = 'auto';
+        /* Définit la hauteur selon le contenu (scrollHeight) */
+        inputField.style.height = (inputField.scrollHeight) + 'px';
+    }
+
+    /* ========== GESTION DE L'HISTORIQUE ========== */
+    function toggleHistoryView() {
+        /* Bascule la classe 'show' sur l'historique */
+        const isVisible = historyContainer.classList.toggle('show');
+        /* Bascule la classe 'history-open' pour la rotation de l'icône */
+        historyToggle.classList.toggle('history-open');
+        /* Change la couleur du bouton (rose si ouvert, violet sinon) */
+        historyToggle.style.background = isVisible ? '#e91e63' : '#5D3FD3';
+    }
+
+    function updateHistoryUI() {
+        /* Affiche le bouton d'historique si des messages existent */
+        if (chatHistory.length > 0) {
+            historyToggle.style.display = 'flex';
+            /* Génère le HTML pour l'historique */
+            historyContainer.innerHTML = chatHistory.map(msg => `
+                <div class="hist-entry ${msg.role === 'user' ? 'hist-user' : 'hist-marie'}">${msg.content}</div>
+            `).join('');
+            /* Scroll au bas de l'historique */
+            historyContainer.scrollTop = historyContainer.scrollHeight;
+        }
+    }
+  
+    /* ========== RECONNAISSANCE VOCALE ========== */
+    /* Récupère l'API de reconnaissance vocale du navigateur */
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition;
+    let isRecording = false;
+
+    /* Initialise la reconnaissance vocale si disponible */
+    if (SpeechRecognition) {
+        recognition = new SpeechRecognition();
+        recognition.continuous = false; /* Une session courte */
+        recognition.interimResults = false; /* Pas de résultats intermédiaires */
+
+        /* Quand le texte est reconnu */
+        recognition.onresult = (e) => {
+            /* Remplit la textarea avec le texte reconnu */
+            inputField.value = e.results[0][0].transcript;
+            autoResizeInput();
+            /* Arrête l'enregistrement */
+            stopVoiceManually(); 
+        };
+
+        /* Gestion des erreurs et fin d'enregistrement */
+        recognition.onerror = () => stopVoiceManually();
+        recognition.onend = () => stopVoiceManually();
+    }
+  
+    /* ========== CONTRÔLES MICROPHONE ========== */
+    function startVoice() {
+        if (!recognition) return;
+        
+        if (!isRecording) {
+            try {
+                /* Définit la langue et lance l'enregistrement */
+                recognition.lang = currentVoiceLang;
+                recognition.start();
+                isRecording = true;
+                /* Change la couleur du bouton au rose */
+                document.getElementById('marie-mic-btn').style.background = "#e91e63";
+                /* Affiche le texte d'écoute */
+                textDisplay.textContent = currentVoiceLang === 'es-ES' ? "Escuchando..." : "Écoute en cours...";
+            } catch (err) {
+                stopVoiceManually();
+            }
+        } else {
+            stopVoiceManually();
+        }
+    }
+
+    function stopVoiceManually() {
+        /* Arrête l'enregistrement */
+        if (isRecording && recognition) {
+            recognition.stop();
+            isRecording = false;
+        }
+        /* Remet le bouton au violet */
+        document.getElementById('marie-mic-btn').style.background = "#E0D7FF";
+    }  
+
+    /* ========== LECTURE AUDIO ========== */
+    function playMarieAudio(audioBase64) {
+        if (!audioBase64) return;
+        /* Crée un élément audio et le joue */
+        const audio = new Audio(audioBase64);
+        audio.play().catch(e => console.error("Erreur audio ElevenLabs:", e));
+    }
+  
+    /* ========== FONCTION PRINCIPALE : ENVOI VERS L'IA ========== */
+    async function sendToAI() {
+        /* Récupère et nettoie le texte */
+        const text = inputField.value.trim();
+        if (!text) return;
+        
+        /* Affiche que Marie pense */
+        textDisplay.textContent = "neoMarie está pensando...";
+        /* Vide la textarea */
+        inputField.value = ""; 
+        autoResizeInput();
+
+        try {
+            /* Envoie le message au backend local */
+            const res = await fetch("http://localhost:3000/chat", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: text, history: chatHistory })
+            });
+
+            /* Récupère la réponse JSON */
+            const data = await res.json();
+
+            /* Vérifie les erreurs du backend */
+            if (data.error) {
+                textDisplay.textContent = "Erreur: " + data.error;
+                return;
+            }
+
+            /* Ajoute les messages à l'historique (user + réponse) */
+            chatHistory.push({ role: 'user', content: text }, { role: 'assistant', content: data.reply });
+            /* Limite l'historique à 8 messages */
+            if (chatHistory.length > 8) chatHistory = chatHistory.slice(-8);
+            /* Sauvegarde dans localStorage */
+            localStorage.setItem('marie_chat_history', JSON.stringify(chatHistory));
+
+            /* Affiche la réponse */
+            textDisplay.textContent = data.reply;
+            /* Met à jour l'affichage de l'historique */
+            updateHistoryUI();
+
+            /* Joue l'audio si le backend l'a envoyé */
+            if (data.audio) {
+                playMarieAudio(data.audio);
+            }
+
+        } catch (e) { 
+            /* Gestion des erreurs de connexion */
+            textDisplay.textContent = "Impossible de joindre Marie."; 
+            console.error(e);
+        }
+    }
+    
+    /* ========== EVENT LISTENERS ========== */
+    /* Envoie le message quand on appuie sur Entrée (pas Shift+Entrée) */
+    inputField.addEventListener('keydown', (e) => { 
+        if (e.key === 'Enter' && !e.shiftKey) { 
+            e.preventDefault(); 
+            sendToAI(); 
+        } 
+    });
+</script>
