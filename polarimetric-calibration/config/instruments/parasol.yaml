@@ -1,0 +1,20 @@
+instrument: PARASOL
+sensor: POLDER-3
+platform: PARASOL (CNES)
+status: available
+
+bands:
+  - { name: B443, wavelength_nm: 443, polarized: false }
+  - { name: B490, wavelength_nm: 490, polarized: true  }
+  - { name: B565, wavelength_nm: 565, polarized: false }
+  - { name: B670, wavelength_nm: 670, polarized: true  }
+  - { name: B763, wavelength_nm: 763, polarized: false }
+  - { name: B765, wavelength_nm: 765, polarized: false }
+  - { name: B865, wavelength_nm: 865, polarized: true  }
+  - { name: B910, wavelength_nm: 910, polarized: false }
+  - { name: B1020,wavelength_nm: 1020,polarized: false }
+
+format: HDF5
+projection: sinusoidal
+pixel_size_km: 6.0
+views_per_pixel_max: 16
