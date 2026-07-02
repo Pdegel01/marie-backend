@@ -1,0 +1,30 @@
+paths:
+  data_root: /data
+  parasol_l1: ${paths.data_root}/parasol/l1
+  output: ./output
+
+geometry:
+  solar_zenith_max: 70.0
+  view_zenith_max: 60.0
+  glint_angle_min: 0.0
+  glint_angle_max: 30.0
+  scattering_angle_min: 150.0
+
+wind:
+  speed_min: 2.0
+  speed_max: 10.0
+
+aerosol:
+  aod_max: 0.1
+  angstrom_max: 0.5
+
+sunglint:
+  cox_munk_model: isotropic
+  refractive_index: 1.34
+  shadowing_correction: true
+
+calibration:
+  reference_stokes: [1, 0, 0, 0]
+  max_iterations: 50
+  convergence_threshold: 1.0e-6
+  bands_to_use: [490, 670, 865]

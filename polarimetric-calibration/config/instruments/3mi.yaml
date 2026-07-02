@@ -1,0 +1,21 @@
+instrument: 3MI
+sensor: 3MI
+platform: MetOp-SG (EUMETSAT)
+status: not_yet_available
+
+bands:
+  - { name: B410,  wavelength_nm: 410,  polarized: true  }
+  - { name: B443,  wavelength_nm: 443,  polarized: true  }
+  - { name: B490,  wavelength_nm: 490,  polarized: true  }
+  - { name: B555,  wavelength_nm: 555,  polarized: false }
+  - { name: B670,  wavelength_nm: 670,  polarized: true  }
+  - { name: B763,  wavelength_nm: 763,  polarized: false }
+  - { name: B865,  wavelength_nm: 865,  polarized: true  }
+  - { name: B1240, wavelength_nm: 1240, polarized: false }
+  - { name: B1600, wavelength_nm: 1600, polarized: true  }
+  - { name: B2130, wavelength_nm: 2130, polarized: false }
+
+format: NetCDF4
+projection: TBD
+pixel_size_km: 4.0
+views_per_pixel_max: 14
